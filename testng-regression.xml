@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Regression: toàn bộ test, chạy song song 2 luồng (mỗi test dùng khách hàng riêng nên không đụng dữ liệu nhau) -->
+<suite name="Bookstore Regression" parallel="methods" thread-count="2" data-provider-thread-count="2">
+    <test name="Regression">
+        <groups>
+            <run>
+                <include name="regression"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.bookstore.tests"/>
+        </packages>
+    </test>
+</suite>

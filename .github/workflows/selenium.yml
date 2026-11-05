@@ -1,0 +1,75 @@
+name: Selenium UI Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Bộ test (testng-smoke.xml / testng-regression.xml)"
+        default: "testng-regression.xml"
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout test code
+        uses: actions/checkout@v4
+
+      # Hệ thống được test (backend Spring Boot + frontend Next.js) và docker-compose
+      # nằm trong repo bookstore-qa-automation -> checkout vào thư mục sut-repo
+      - name: Checkout system under test
+        uses: actions/checkout@v4
+        with:
+          repository: VoPhuocViet1909/bookstore-qa-automation
+          path: sut-repo
+
+      - name: Start backend + MySQL + Redis + Mailpit (Docker)
+        working-directory: sut-repo/env
+        run: docker compose up -d --build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Start frontend (Next.js)
+        working-directory: sut-repo/sut/frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080/api
+        run: |
+          npm ci --legacy-peer-deps
+          nohup npm run dev > $GITHUB_WORKSPACE/frontend.log 2>&1 &
+
+      - name: Wait for frontend
+        run: npx wait-on http://localhost:3000 --timeout 180000
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      # Chrome có sẵn trên runner ubuntu-latest; Selenium Manager tự tải ChromeDriver
+      - name: Run Selenium tests (headless)
+        run: mvn -B test -DsuiteXml=${{ github.event.inputs.suite || 'testng-regression.xml' }} -Dheadless=true
+
+      - name: Build Allure report
+        if: always()
+        run: mvn -B allure:report
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: target/site/allure-maven-plugin/
+          retention-days: 14
+
+      - name: Service logs (khi lỗi)
+        if: failure()
+        run: |
+          docker compose -f sut-repo/env/docker-compose.yml logs backend --tail=200
+          tail -n 100 frontend.log

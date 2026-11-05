@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Smoke: các luồng quan trọng nhất, chạy nhanh để biết môi trường còn dùng được không -->
+<suite name="Bookstore Smoke" parallel="methods" thread-count="1">
+    <test name="Smoke">
+        <groups>
+            <run>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.bookstore.tests"/>
+        </packages>
+    </test>
+</suite>
