@@ -27,8 +27,9 @@ Bộ kiểm thử giao diện tự động cho **NotFound Bookstore**, website b
 |---|---|---|
 | TC-UI-LOGIN-01 | Khách hàng đăng nhập thành công -> /account | smoke |
 | TC-UI-LOGIN-02 | Admin đăng nhập thành công -> /admin | smoke |
-| TC-UI-LOGIN-03..07 | Bỏ trống / sai mật khẩu / tài khoản không tồn tại (data-driven) | regression |
-| TC-UI-LOGIN-08 | Mật khẩu không bị ghi ra console trình duyệt | security |
+| TC-UI-LOGIN-03..05 | Bỏ trống tên đăng nhập / mật khẩu (data-driven) | regression |
+| TC-UI-LOGIN-06..07 | Sai mật khẩu / tài khoản không tồn tại (data-driven) | known-bug (BUG-010) |
+| TC-UI-LOGIN-08 | Mật khẩu không bị ghi ra console trình duyệt | known-bug (BUG-009) |
 | TC-UI-LOGIN-09 | Đăng nhập xong quay lại đúng trang được yêu cầu | regression |
 | TC-UI-SHOP-01 | Trang chi tiết hiển thị đúng tên và giá | smoke |
 | TC-UI-SHOP-02 | Khách chưa đăng nhập thêm vào giỏ -> trang đăng nhập | regression |
@@ -36,11 +37,34 @@ Bộ kiểm thử giao diện tự động cho **NotFound Bookstore**, website b
 | TC-UI-SHOP-04 | Tăng/giảm số lượng cập nhật thành tiền | regression |
 | TC-UI-SHOP-05 | Không tăng số lượng vượt tồn kho (BVA) | regression |
 | TC-UI-SHOP-06 | Xoá sản phẩm khỏi giỏ | regression |
-| TC-UI-CHK-01 | Đặt hàng COD thành công | smoke |
-| TC-UI-CHK-02 | Số tiền hiển thị bằng tổng tiền thực tế của đơn | regression |
-| TC-UI-CHK-03 | Áp mã giảm giá 10% | regression |
+| TC-UI-CHK-01 | Đặt hàng COD thành công | known-bug (BUG-007, BUG-008) |
+| TC-UI-CHK-02 | Số tiền hiển thị bằng tổng tiền thực tế của đơn | known-bug (BUG-007) |
+| TC-UI-CHK-03 | Áp mã giảm giá 10% | known-bug (BUG-011) |
 | TC-UI-SEC-01 | Khách hàng không vào được /admin | security |
 | TC-UI-ADM-01 | Admin thấy sách vừa tạo trong trang quản lý | smoke |
+
+## Bug tìm được & nhóm `known-bug`
+
+Bộ test đã phát hiện các bug thật của hệ thống, báo cáo chi tiết trong
+[bookstore-qa-automation/docs/bugs](https://github.com/VoPhuocViet1909/bookstore-qa-automation/tree/main/docs/bugs):
+
+| Bug | Nội dung | Test phát hiện |
+|---|---|---|
+| BUG-006 | Trang chủ / chi tiết sách sập khi `discountPrice = null` (đã vá tạm trong môi trường test để chạy tiếp) | TC-UI-SHOP-01 |
+| BUG-007 | Đặt hàng COD luôn thất bại (rollback cả đơn) | TC-UI-CHK-01, CHK-02 |
+| BUG-008 | Frontend báo "Đặt hàng thành công" dù backend trả lỗi | TC-UI-CHK-01 |
+| BUG-009 | Mật khẩu bị ghi ra console trình duyệt | TC-UI-LOGIN-08 |
+| BUG-010 | Sai mật khẩu hiện thông báo chung "Đăng nhập thất bại" | TC-UI-LOGIN-06, 07 |
+| BUG-011 | Áp mã giảm giá báo thành công nhưng tổng tiền không giảm | TC-UI-CHK-03 |
+
+Các test này được gắn group `known-bug` và chạy riêng bằng `testng-known-bugs.xml`:
+- `smoke` / `regression` loại trừ `known-bug`, nên build xanh nghĩa là **không có lỗi mới (regression)**.
+- CI vẫn chạy bộ `known-bug` (không chặn build) và kết quả nằm trong Allure report.
+- Khi dev sửa bug, test sẽ pass -> chuyển test về lại `regression`.
+
+```bash
+mvn test -DsuiteXml=testng-known-bugs.xml   # chạy riêng các test đang bắt bug
+```
 
 ## Cấu trúc thư mục
 
@@ -55,7 +79,7 @@ Bộ kiểm thử giao diện tự động cho **NotFound Bookstore**, website b
 │   ├── listeners/ # Chụp màn hình khi fail -> Allure
 │   └── tests/     # LoginTest, CartTest, CheckoutTest, AccessControlTest
 ├── src/test/resources/config.properties
-├── testng-smoke.xml / testng-regression.xml
+├── testng-smoke.xml / testng-regression.xml / testng-known-bugs.xml
 └── .github/workflows/selenium.yml
 ```
 

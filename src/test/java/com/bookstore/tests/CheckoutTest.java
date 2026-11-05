@@ -30,7 +30,8 @@ public class CheckoutTest extends BaseTest {
         return checkout;
     }
 
-    @Test(groups = {"smoke", "regression"}, description = "TC-UI-CHK-01 Đặt hàng COD thành công từ giỏ hàng")
+    // known-bug: đang FAIL đúng vì BUG-007 + BUG-008 (docs/bugs trong repo bookstore-qa-automation)
+    @Test(groups = {"known-bug"}, description = "TC-UI-CHK-01 Đặt hàng COD thành công từ giỏ hàng [BUG-007, BUG-008]")
     @Severity(SeverityLevel.BLOCKER)
     public void placeCodOrder() {
         Customers.Session c = Customers.fresh("se_chk");
@@ -48,7 +49,7 @@ public class CheckoutTest extends BaseTest {
         Assert.assertEquals(orders.get(0).path("status").asText(), "PENDING");
     }
 
-    @Test(groups = {"regression"}, description = "TC-UI-CHK-02 Số tiền hiển thị khi thanh toán phải bằng tổng tiền thực tế của đơn")
+    @Test(groups = {"known-bug"}, description = "TC-UI-CHK-02 Số tiền hiển thị khi thanh toán phải bằng tổng tiền thực tế của đơn [BUG-007]")
     @Severity(SeverityLevel.CRITICAL)
     public void displayedTotalMatchesOrderTotal() {
         Customers.Session c = Customers.fresh("se_chk");
@@ -69,7 +70,7 @@ public class CheckoutTest extends BaseTest {
                 vnd(shown), shipping, vnd(actual), vnd(order.path("shippingFee").asLong())));
     }
 
-    @Test(groups = {"regression"}, description = "TC-UI-CHK-03 Áp mã giảm giá 10% trên trang thanh toán")
+    @Test(groups = {"known-bug"}, description = "TC-UI-CHK-03 Áp mã giảm giá 10% trên trang thanh toán [BUG-011]")
     public void applyDiscountCode() {
         Customers.Session c = Customers.fresh("se_chk");
         SeedBook book = data.mainBook;

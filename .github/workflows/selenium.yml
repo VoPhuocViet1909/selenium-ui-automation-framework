@@ -46,6 +46,13 @@ jobs:
       - name: Wait for frontend
         run: npx wait-on http://localhost:3000 --timeout 180000
 
+      # Next.js dev chỉ biên dịch trang ở lần mở đầu tiên -> mở trước để test không bị timeout
+      - name: Warm up frontend pages
+        run: |
+          for p in / /login /cart /checkout /account /account/orders /admin /admin/books /products/warmup; do
+            curl -s -o /dev/null -w "%{http_code} $p\n" --max-time 180 "http://localhost:3000$p" || true
+          done
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -55,6 +62,12 @@ jobs:
       # Chrome có sẵn trên runner ubuntu-latest; Selenium Manager tự tải ChromeDriver
       - name: Run Selenium tests (headless)
         run: mvn -B test -DsuiteXml=${{ github.event.inputs.suite || 'testng-regression.xml' }} -Dheadless=true
+
+      # Test phát hiện bug đã báo cáo (docs/bugs): dự kiến fail, không chặn build, vẫn hiện trong Allure report
+      - name: Run known-bug tests (expected to fail)
+        if: always()
+        continue-on-error: true
+        run: mvn -B test -DsuiteXml=testng-known-bugs.xml -Dheadless=true
 
       - name: Build Allure report
         if: always()

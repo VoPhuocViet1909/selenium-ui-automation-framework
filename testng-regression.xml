@@ -5,6 +5,8 @@
         <groups>
             <run>
                 <include name="regression"/>
+                <!-- Test đang fail do bug đã báo cáo của hệ thống: chạy riêng ở testng-known-bugs.xml -->
+                <exclude name="known-bug"/>
             </run>
         </groups>
         <packages>

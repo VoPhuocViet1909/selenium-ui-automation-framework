@@ -55,7 +55,15 @@ public class LoginTest extends BaseTest {
                 {"TC-UI-LOGIN-03 Bỏ trống cả hai ô", "", "", MSG_REQUIRED},
                 {"TC-UI-LOGIN-04 Bỏ trống mật khẩu", user, "", MSG_REQUIRED},
                 {"TC-UI-LOGIN-05 Bỏ trống tên đăng nhập", "", "Test@123", MSG_REQUIRED},
-                {"TC-UI-LOGIN-06 Sai mật khẩu", user, "SaiMatKhau!", MSG_INVALID},
+        };
+    }
+
+    /** Sai thông tin đăng nhập: đang FAIL đúng vì BUG-010 (hiện "Đăng nhập thất bại" thay vì thông báo đúng) */
+    @DataProvider(name = "wrongCredentials")
+    public Object[][] wrongCredentials() {
+        TestData seed = TestData.get();
+        return new Object[][]{
+                {"TC-UI-LOGIN-06 Sai mật khẩu", seed.customer.username(), "SaiMatKhau!", MSG_INVALID},
                 // Cùng thông báo với sai mật khẩu -> không lộ username nào tồn tại (user enumeration)
                 {"TC-UI-LOGIN-07 Tài khoản không tồn tại", "khong_ton_tai_" + seed.runId, "Test@123", MSG_INVALID},
         };
@@ -72,7 +80,13 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(login.currentUrl().contains("/login"), caseName + ": không được rời trang đăng nhập");
     }
 
-    @Test(groups = {"regression", "security"}, description = "TC-UI-LOGIN-08 Không ghi mật khẩu ra console trình duyệt")
+    @Test(dataProvider = "wrongCredentials", groups = {"known-bug"},
+            description = "TC-UI-LOGIN-06..07 Sai mật khẩu / tài khoản không tồn tại hiển thị đúng thông báo [BUG-010]")
+    public void wrongCredentialsShowError(String caseName, String username, String password, String expectedMessage) {
+        invalidLoginShowsError(caseName, username, password, expectedMessage);
+    }
+
+    @Test(groups = {"known-bug", "security"}, description = "TC-UI-LOGIN-08 Không ghi mật khẩu ra console trình duyệt [BUG-009]")
     @Severity(SeverityLevel.CRITICAL)
     public void passwordNotLoggedToConsole() {
         LoginPage login = new LoginPage().open();
